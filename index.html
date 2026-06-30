@@ -260,7 +260,7 @@
   // ===== クラウド同期設定（Supabase REST 直叩き）=====
   // カロリーアプリと同じSupabaseプロジェクトを再利用。
   var SUPABASE_URL = "https://lfrxapslvxufqmtxwnzc.supabase.co";
-  var SUPABASE_KEY = "__ANON_KEY__"; // Supabaseの anon/public キー（埋め込み時に置換）
+  var SUPABASE_KEY = "sb_publishable_6CAuNB6h_8I2EDSNyqzPCQ_PqUbHkBK"; // Supabase publishable(public)キー
   var SYNC_KEY     = "tobita-ap";    // この合言葉が同じ端末どうしでデータ共有（スマホ⇔PC）
   var SYNC_ON      = SUPABASE_KEY.indexOf("__ANON") !== 0; // 未設定ならローカルのみ
   var REST         = SUPABASE_URL + "/rest/v1/ap_tracker";
