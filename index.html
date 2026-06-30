@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>応用情報 進捗トラッカー</title>
+<style>
+  :root{
+    --bg:#0e1014; --card:#181c24; --card2:#1d2230; --surface:#222734;
+    --line:rgba(255,255,255,.07); --line2:rgba(255,255,255,.13);
+    --text:#eef1f7; --muted:#9aa4b6; --hint:#697086;
+    --accent:#7c8cff; --green:#42d6a0; --amber:#ffb13d; --danger:#ff6b6b;
+    --ok:#42d6a0;
+    --grad:linear-gradient(135deg,#6d7bff 0%,#a779ff 100%);
+    --grad2:linear-gradient(135deg,#3dd6e6 0%,#6d7bff 100%);
+    --gradfire:linear-gradient(135deg,#ffb13d 0%,#ff7a59 100%);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:radial-gradient(1100px 560px at 50% -12%, rgba(124,140,255,.13), transparent 60%), var(--bg);
+    color:var(--text);min-height:100vh;letter-spacing:.01em;line-height:1.6;-webkit-font-smoothing:antialiased;
+    font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;
+  }
+  .wrap{max-width:660px;margin:0 auto;padding:26px 16px 56px}
+  h1{font-size:20px;font-weight:800;margin:0;letter-spacing:.02em;
+    background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  h2{font-size:13px;font-weight:600;margin:0 0 12px;color:var(--muted);letter-spacing:.03em}
+  .top{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+  .top .meta{font-size:12.5px;color:var(--muted)}
+  .top .meta b{color:var(--text);font-weight:800}
+
+  .goal{border-radius:18px;padding:1.5px;background:var(--grad);margin-bottom:18px;
+    box-shadow:0 14px 34px -16px rgba(124,140,255,.6)}
+  .goal-inner{background:linear-gradient(180deg,#191d27,#13161d);border-radius:16.5px;padding:16px 18px}
+  .goal-head{font-size:13px;font-weight:800;color:var(--text);margin-bottom:13px;display:flex;align-items:center;gap:8px}
+  .goal-sub{font-size:11px;color:var(--hint);font-weight:600}
+  .goal-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .g{background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:12px;padding:12px;text-align:center}
+  .g .gk{font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.06em}
+  .g .gv{font-size:22px;font-weight:800;margin:4px 0 1px;
+    background:var(--grad2);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .g .gs{font-size:10.5px;color:var(--hint);line-height:1.45}
+  @media(max-width:460px){.goal-grid{grid-template-columns:1fr;gap:8px}
+    .g{text-align:left;display:flex;align-items:baseline;gap:10px}.g .gv{font-size:18px;margin:0}.g .gs{margin-left:auto;text-align:right}}
+
+  .tabs{display:flex;gap:6px;margin-bottom:18px;background:var(--card);padding:5px;border-radius:13px;border:1px solid var(--line)}
+  .tab{flex:1;padding:10px 0;border:none;border-radius:9px;background:transparent;color:var(--muted);font-weight:700;font-size:13.5px;transition:.2s}
+  .tab.active{background:var(--grad);color:#fff;box-shadow:0 6px 16px -7px rgba(124,140,255,.8)}
+
+  .metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(116px,1fr));gap:11px;margin-bottom:20px}
+  .m{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);border-radius:14px;padding:13px 15px;overflow:hidden}
+  .m .lbl{font-size:11.5px;color:var(--muted);margin:0;font-weight:600}
+  .m .val{font-size:25px;font-weight:800;margin:3px 0 0;font-variant-numeric:tabular-nums}
+  .m .val small{font-size:12.5px;font-weight:500;color:var(--muted)}
+  .m.streak{background:linear-gradient(180deg,rgba(255,177,61,.15),var(--card));border-color:rgba(255,177,61,.32)}
+  .m.streak .val{background:var(--gradfire);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+  .card{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);
+    border-radius:16px;padding:17px 19px;margin-bottom:15px;box-shadow:0 6px 22px -14px rgba(0,0,0,.7)}
+
+  .bar{height:11px;background:rgba(255,255,255,.06);border-radius:7px;overflow:hidden;margin-top:5px}
+  .bar > i{display:block;height:100%;border-radius:7px;transition:width .5s cubic-bezier(.2,.8,.2,1)}
+  .bar-row{margin-bottom:14px}
+  .bar-row .h{display:flex;justify-content:space-between;font-size:13px;margin-bottom:3px}
+  .bar-row .h b{font-weight:800;font-variant-numeric:tabular-nums}
+  .subj{display:flex;align-items:center;gap:11px;margin-bottom:11px}
+  .subj .name{font-size:13px;width:90px;flex-shrink:0}
+  .subj .bar{flex:1;margin:0}
+  .subj .cnt{font-size:12px;color:var(--muted);width:54px;text-align:right;flex-shrink:0;font-weight:700;font-variant-numeric:tabular-nums}
+
+  label{font-size:13.5px;color:var(--text)}
+  .field{display:flex;align-items:center;gap:11px;margin-bottom:13px;flex-wrap:wrap}
+  .field > label{min-width:84px;color:var(--muted);font-weight:600}
+  input[type=range]{flex:1;accent-color:var(--accent);height:5px}
+  select,input[type=text]{flex:1;min-width:120px;padding:9px 11px;border:1px solid var(--line2);border-radius:9px;
+    background:var(--surface);color:var(--text);font-size:14px;font-family:inherit}
+  select:focus,input:focus{outline:none;border-color:var(--accent)}
+  button{font-family:inherit;cursor:pointer;font-size:14px}
+  .btn{padding:12px 14px;border-radius:11px;border:none;background:var(--grad);color:#fff;font-weight:700;width:100%;
+    letter-spacing:.03em;box-shadow:0 8px 20px -10px rgba(124,140,255,.7);transition:.15s}
+  .btn:hover{filter:brightness(1.08)}
+  .btn:active{transform:translateY(1px) scale(.995)}
+  .btn.add{margin-top:6px}
+  .hint{font-size:12px;color:var(--muted)}
+  .ok{color:var(--green)}
+  .saved{font-size:11.5px;color:#0e1014;font-weight:800;background:var(--green);padding:3px 10px;border-radius:8px}
+
+  .hist{list-style:none;margin:0;padding:0}
+  .hist li{display:flex;align-items:center;gap:9px;padding:9px 0;border-top:1px solid var(--line);font-size:13px}
+  .hist li:first-child{border-top:none}
+  .tag{font-size:11px;font-weight:700;padding:3px 9px;border-radius:7px;color:#fff;flex-shrink:0;letter-spacing:.02em}
+  .hist .yr{color:var(--muted)}
+  .hist .del{margin-left:auto;border:none;background:transparent;color:var(--hint);font-size:17px;padding:2px 7px;border-radius:7px;line-height:1}
+  .hist .del:hover{color:var(--danger);background:rgba(255,107,107,.12)}
+  .empty{font-size:13px;color:var(--hint);padding:11px 0}
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:10px;font-size:11.5px;color:var(--hint)}
+  .reset{border:1px solid var(--line2);background:transparent;color:var(--muted);padding:6px 12px;border-radius:9px}
+  .reset:hover{border-color:var(--danger);color:var(--danger)}
+
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <h1>応用情報 進捗トラッカー</h1>
+    <div class="meta"><span id="phase"></span> ／ 試験まで <b id="days"></b></div>
+  </div>
+
+  <div class="goal">
+    <div class="goal-inner">
+      <div class="goal-head">🎯 やり切れば、ここまで到達する <span class="goal-sub">全部こなした時のゴール</span></div>
+      <div class="goal-grid">
+        <div class="g"><div class="gk">科目A 演習</div><div class="gv">5年分</div><div class="gs">約2.3周（10回/800問）</div></div>
+        <div class="g"><div class="gk">科目B 演習</div><div class="gv">3年分</div><div class="gs">各科目6回 / 全36回</div></div>
+        <div class="g"><div class="gk">実践フェーズ</div><div class="gv">8セット</div><div class="gs">本番形式 科目A＋B</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" id="tabBtnR">演習フェーズ</button>
+    <button class="tab" id="tabBtnJ">実践フェーズ</button>
+  </div>
+
+  <div id="tabRenshu">
+  <div class="metrics">
+    <div class="m streak"><p class="lbl">🔥 連続記録</p><p class="val" id="mStreak">0<small> 日</small></p></div>
+    <div class="m"><p class="lbl">科目A 累計</p><p class="val" id="mAm">0<small> /1875</small></p></div>
+    <div class="m"><p class="lbl">科目B 完了</p><p class="val" id="mPm">0<small> /34回</small></p></div>
+    <div class="m"><p class="lbl">計画との差(科目A)</p><p class="val" id="mDiff">0</p></div>
+  </div>
+
+  <div class="card">
+    <h2>全体の進捗</h2>
+    <div class="bar-row">
+      <div class="h"><span>科目A 過去問</span><b id="amPct">0%</b></div>
+      <div class="bar"><i id="amBar" style="width:0%;background:linear-gradient(90deg,#6d7bff,#a779ff)"></i></div>
+    </div>
+    <div class="bar-row" style="margin-bottom:0">
+      <div class="h"><span>科目B 演習</span><b id="pmPct">0%</b></div>
+      <div class="bar"><i id="pmBar" style="width:0%;background:linear-gradient(90deg,#3dd6e6,#6d7bff)"></i></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>科目別の進捗（科目B・DB手厚めの配分）</h2>
+    <div id="subjList"></div>
+  </div>
+
+  <div class="card">
+    <h2>科目A を記録に追加（問数×年度）<span id="savedBadge"></span></h2>
+    <div class="field">
+      <label>科目A 問数</label>
+      <input type="range" id="amRange" min="-30" max="60" step="1" value="28">
+      <span style="min-width:60px;text-align:right;font-weight:600"><span id="amOut">+28</span>問</span>
+    </div>
+    <div class="hint" id="amHint" style="margin:-6px 0 14px 90px">目標 28問</div>
+    <div class="field">
+      <label>年度</label>
+      <select id="amYear"></select>
+    </div>
+    <button class="btn add" id="addAm">科目A を記録に追加</button>
+    <div class="hint" style="margin-top:8px">マイナスを入れれば入力ミスの訂正もできます。</div>
+  </div>
+
+  <div class="card">
+    <h2>科目B を1問やったら追加（年度×科目）</h2>
+    <div class="field">
+      <label>科目</label>
+      <select id="pmSubj"></select>
+    </div>
+    <div class="field">
+      <label>年度</label>
+      <select id="pmYear"></select>
+    </div>
+    <button class="btn add" id="addPm">この1問を記録に追加</button>
+  </div>
+
+  <div class="card">
+    <h2>記録一覧</h2>
+    <ul class="hist" id="histList"></ul>
+  </div>
+  </div>
+
+  <div id="tabJissen" style="display:none">
+  <div class="metrics">
+    <div class="m"><p class="lbl">実践セット完了</p><p class="val" id="jDone">0<small> /8</small></p></div>
+    <div class="m"><p class="lbl">試験まで</p><p class="val" id="jDays">0<small> 日</small></p></div>
+    <div class="m"><p class="lbl">直近の手応え</p><p class="val" id="jFeel" style="font-size:18px">―</p></div>
+  </div>
+
+  <div class="card">
+    <h2>実践フェーズの進捗（本番形式・目標8セット）</h2>
+    <div class="bar-row" style="margin-bottom:0">
+      <div class="h"><span>本番形式セット</span><b id="jPct">0%</b></div>
+      <div class="bar"><i id="jBar" style="width:0%;background:linear-gradient(90deg,#42d6a0,#3dd6e6)"></i></div>
+    </div>
+    <div class="hint" style="margin-top:10px">10月上旬〜試験。1セット＝科目A(80問)＋科目B(セキュリティ＋選択4問)を本番と同じ時間配分で通し。週2セットが目安です。</div>
+  </div>
+
+  <div class="card">
+    <h2>本番形式（科目A＋科目B）を1セット終えたら追加</h2>
+    <div class="field">
+      <label>科目B手応え</label>
+      <select id="jFeelSel">
+        <option value="good">合格圏（60%超）</option>
+        <option value="border">ボーダー</option>
+        <option value="ng">要復習（届かず）</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>科目A 得点率</label>
+      <input type="range" id="jAmScore" min="0" max="100" step="5" value="70">
+      <span style="min-width:46px;text-align:right;font-weight:600"><span id="jAmOut">70</span>%</span>
+    </div>
+    <div class="field">
+      <label>メモ</label>
+      <input type="text" id="jMemo" placeholder="例：DBで時間切れ" style="flex:1;min-width:120px;padding:8px 10px;border:.5px solid var(--line);border-radius:8px;background:var(--card);color:var(--text);font-size:14px;font-family:inherit">
+    </div>
+    <button class="btn add" id="addJ">この1セットを記録に追加</button>
+  </div>
+
+  <div class="card">
+    <h2>実践セットの記録</h2>
+    <ul class="hist" id="jHist"></ul>
+  </div>
+  </div>
+
+  <div class="foot">
+    <span id="syncStatus">同期：準備中…</span>
+    <button class="reset" id="resetBtn">全記録をリセット</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var EXAM = new Date("2026-11-01T00:00:00");
+  var START = new Date("2026-07-01T00:00:00");
+  var RENSHU_END = new Date("2026-10-01T00:00:00");
+  var AM_GOAL_DAY = 28, AM_GOAL_TOTAL = 1875;
+  var PRACTICE_GOAL = 8;
+
+  var SUBJECTS = [
+    {key:"PM", name:"PM", full:"プロジェクトマネジメント", c:"#7c6cff", goal:7},
+    {key:"SM", name:"SM", full:"サービスマネジメント", c:"#29b58f", goal:5},
+    {key:"DB", name:"DB", full:"データベース", c:"#e0a23c", goal:8},
+    {key:"IS", name:"情シス", full:"情報システム開発", c:"#8bc34a", goal:6},
+    {key:"SA", name:"SA", full:"システムアーキテクチャ", c:"#D85A30", goal:3},
+    {key:"SEC", name:"ｾｷｭﾘﾃｨ", full:"情報セキュリティ(必須)", c:"#6b7a99", goal:5}
+  ];
+  var YEARS = [
+    "令和7年 秋","令和7年 春","令和6年 秋","令和6年 春",
+    "令和5年 秋","令和5年 春","令和4年 秋","令和4年 春","令和3年 秋","令和3年 春"
+  ];
+  var AM_YEARS = ["混合/道場"].concat(YEARS);
+
+  var KEY = "ap_tracker_v2";
+  // ===== クラウド同期設定（Supabase REST 直叩き）=====
+  // カロリーアプリと同じSupabaseプロジェクトを再利用。
+  var SUPABASE_URL = "https://lfrxapslvxufqmtxwnzc.supabase.co";
+  var SUPABASE_KEY = "__ANON_KEY__"; // Supabaseの anon/public キー（埋め込み時に置換）
+  var SYNC_KEY     = "tobita-ap";    // この合言葉が同じ端末どうしでデータ共有（スマホ⇔PC）
+  var SYNC_ON      = SUPABASE_KEY.indexOf("__ANON") !== 0; // 未設定ならローカルのみ
+  var REST         = SUPABASE_URL + "/rest/v1/ap_tracker";
+  function sbHeaders(extra){
+    var h = {"apikey":SUPABASE_KEY,"Authorization":"Bearer "+SUPABASE_KEY,"Content-Type":"application/json"};
+    if(extra) for(var k in extra) h[k]=extra[k];
+    return h;
+  }
+  var data = {am:[], pm:[], practice:[]};
+  try{
+    var raw = localStorage.getItem(KEY);
+    if(raw){
+      data = JSON.parse(raw);
+      if(!data.pm) data.pm=[];
+      if(!data.am) data.am=[];
+      if(!data.practice) data.practice=[];
+      if(!Array.isArray(data.am)){
+        var arr=[];
+        for(var dk in data.am){
+          arr.push({id:dk+"-mig", date:dk, year:"混合/道場", count:Number(data.am[dk])||0});
+        }
+        data.am=arr;
+      }
+    }
+  }catch(e){}
+
+  function setSync(t){ var el=document.getElementById("syncStatus"); if(el) el.textContent=t; }
+
+  function nowHM(){ return new Date().toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"}); }
+
+  var pushTimer=null;
+  function save(){
+    try{ localStorage.setItem(KEY, JSON.stringify(data)); }catch(e){}
+    if(!SYNC_ON) return;
+    // 700msデバウンスでクラウドへ反映
+    if(pushTimer) clearTimeout(pushTimer);
+    pushTimer=setTimeout(syncPush, 700);
+  }
+  function syncPush(){
+    if(!SYNC_ON) return;
+    setSync("同期中…");
+    fetch(REST+"?on_conflict=key", {
+      method:"POST",
+      headers:sbHeaders({"Prefer":"resolution=merge-duplicates,return=minimal"}),
+      body:JSON.stringify({key:SYNC_KEY, data:data, updated_at:new Date().toISOString()})
+    }).then(function(r){
+      setSync(r.ok ? ("同期✓ "+nowHM()) : "同期エラー（ローカル保存済）");
+    }).catch(function(){ setSync("オフライン（ローカル保存済）"); });
+  }
+  function syncPull(){
+    if(!SYNC_ON){ setSync("ローカル保存のみ（同期オフ）"); return; }
+    setSync("同期中…");
+    fetch(REST+"?key=eq."+encodeURIComponent(SYNC_KEY)+"&select=data", {headers:sbHeaders()})
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(rows){
+        var d = (rows && rows[0]) ? rows[0].data : null;
+        if(d && (d.am || d.pm || d.practice)){
+          data=d;
+          if(!data.am) data.am=[]; if(!data.pm) data.pm=[]; if(!data.practice) data.practice=[];
+          try{ localStorage.setItem(KEY, JSON.stringify(data)); }catch(e){}
+          render();
+          setSync("同期✓ "+nowHM());
+        } else {
+          // リモート未作成 → 現在のローカルを初回アップロード
+          syncPush();
+        }
+      })
+      .catch(function(){ setSync("オフライン（ローカル保存のみ）"); });
+  }
+  function ymd(d){ return d.toISOString().slice(0,10); }
+  function todayKey(){ return ymd(new Date()); }
+  function subjOf(k){ for(var i=0;i<SUBJECTS.length;i++) if(SUBJECTS[i].key===k) return SUBJECTS[i]; return SUBJECTS[0]; }
+
+  function studyDaysElapsed(){
+    var c=0, cur=new Date(START), today=new Date();
+    while(cur<=today && cur<=RENSHU_END){
+      var wd=cur.getDay();
+      if(wd!==0 && wd!==6) c++;
+      cur=new Date(cur.getTime()+86400000);
+    }
+    return c;
+  }
+
+  function render(){
+    var amSum=0; data.am.forEach(function(r){ amSum+=Number(r.count)||0; });
+    var pmCount=data.pm.length;
+
+    var perSubj={}; SUBJECTS.forEach(function(s){perSubj[s.key]=0;});
+    data.pm.forEach(function(r){ if(perSubj[r.subj]!=null) perSubj[r.subj]++; });
+
+    var amByDay={};
+    data.am.forEach(function(r){ amByDay[r.date]=(amByDay[r.date]||0)+(Number(r.count)||0); });
+    var activeDays={};
+    for(var d in amByDay){ if(amByDay[d]>=AM_GOAL_DAY) activeDays[d]=true; }
+    data.pm.forEach(function(r){ activeDays[r.date]=true; });
+
+    var streak=0, cur=new Date(), tk=todayKey();
+    for(var i=0;i<300;i++){
+      var wd=cur.getDay(), key=ymd(cur);
+      if(wd===0||wd===6){ cur=new Date(cur.getTime()-86400000); continue; }
+      if(activeDays[key]){ streak++; cur=new Date(cur.getTime()-86400000); }
+      else if(key===tk){ cur=new Date(cur.getTime()-86400000); }
+      else break;
+    }
+
+    var elapsed=studyDaysElapsed();
+    var expAm=Math.min(elapsed*AM_GOAL_DAY, AM_GOAL_TOTAL);
+    var diff=Math.round(amSum-expAm);
+
+    var amPct=Math.min(100, Math.round(amSum/AM_GOAL_TOTAL*100));
+    var pmGoalTotal=0; SUBJECTS.forEach(function(s){ pmGoalTotal+=s.goal; });
+    var pmDoneCapped=0; SUBJECTS.forEach(function(s){ pmDoneCapped+=Math.min(perSubj[s.key], s.goal); });
+    var pmPct=Math.min(100, Math.round(pmDoneCapped/pmGoalTotal*100));
+
+    document.getElementById("mStreak").innerHTML=streak+'<small> 日</small>';
+    document.getElementById("mAm").innerHTML=amSum+'<small> /'+AM_GOAL_TOTAL+'</small>';
+    document.getElementById("mPm").innerHTML=pmCount+'<small> /'+pmGoalTotal+'回</small>';
+    var diffEl=document.getElementById("mDiff");
+    diffEl.textContent=(diff>=0?"+":"")+diff;
+    diffEl.style.color = diff>=0 ? "var(--ok)" : "var(--danger)";
+
+    document.getElementById("amPct").textContent=amPct+"%";
+    document.getElementById("amBar").style.width=amPct+"%";
+    document.getElementById("pmPct").textContent=pmPct+"%";
+    document.getElementById("pmBar").style.width=pmPct+"%";
+
+    var days=Math.max(0, Math.round((EXAM-new Date())/86400000));
+    document.getElementById("days").textContent=days+"日";
+    document.getElementById("phase").textContent = (new Date()>RENSHU_END)?"実践期":"演習期";
+
+    var sl=document.getElementById("subjList"); sl.innerHTML="";
+    SUBJECTS.forEach(function(s){
+      var n=perSubj[s.key], pct=Math.min(100, Math.round(n/s.goal*100));
+      var row=document.createElement("div"); row.className="subj";
+      row.innerHTML='<span class="name">'+s.full.replace(/\(.*\)/,"")+'</span>'+
+        '<div class="bar"><i style="width:'+pct+'%;background:'+s.c+'"></i></div>'+
+        '<span class="cnt">'+n+'/'+s.goal+'回</span>';
+      sl.appendChild(row);
+    });
+
+    var hist=document.getElementById("histList"); hist.innerHTML="";
+    var all=[];
+    data.am.forEach(function(r){ all.push({kind:"am", r:r}); });
+    data.pm.forEach(function(r){ all.push({kind:"pm", r:r}); });
+    all.sort(function(a,b){
+      var ka=String(a.r.id), kb=String(b.r.id);
+      return ka<kb?1:(ka>kb?-1:0);
+    });
+    if(all.length===0){
+      hist.innerHTML='<li class="empty">まだ記録がありません。科目Aか科目Bを追加してください。</li>';
+    } else {
+      all.forEach(function(item){
+        var r=item.r, li=document.createElement("li");
+        if(item.kind==="pm"){
+          var s=subjOf(r.subj);
+          li.innerHTML='<span class="tag" style="background:'+s.c+'">'+s.name+'</span>'+
+            '<span class="yr">'+r.year+'</span>'+
+            '<button class="del" data-kind="pm" data-id="'+r.id+'" aria-label="削除">×</button>';
+        } else {
+          var n=Number(r.count)||0, sign=(n>=0?"+":"")+n;
+          var col=(n>=0?"#5b6cf0":"#ff6b6b");
+          li.innerHTML='<span class="tag" style="background:'+col+'">科目A '+sign+'</span>'+
+            '<span class="yr">'+r.year+'</span>'+
+            '<button class="del" data-kind="am" data-id="'+r.id+'" aria-label="削除">×</button>';
+        }
+        hist.appendChild(li);
+      });
+      Array.prototype.forEach.call(hist.querySelectorAll(".del"), function(b){
+        b.addEventListener("click", function(){
+          var id=this.getAttribute("data-id"), kind=this.getAttribute("data-kind");
+          if(kind==="pm") data.pm=data.pm.filter(function(x){return String(x.id)!==String(id);});
+          else data.am=data.am.filter(function(x){return String(x.id)!==String(id);});
+          save(); render();
+        });
+      });
+    }
+
+    var todayAm=amByDay[todayKey()]||0;
+    document.getElementById("savedBadge").innerHTML =
+      todayAm!==0 ? ' <span class="saved">今日 '+todayAm+'問</span>' : '';
+
+    renderPractice(days);
+  }
+
+  var FEEL={good:{t:"合格圏",c:"#42d6a0"},border:{t:"ボーダー",c:"#ffb13d"},ng:{t:"要復習",c:"#ff6b6b"}};
+
+  function renderPractice(days){
+    var n=data.practice.length;
+    var pct=Math.min(100, Math.round(n/PRACTICE_GOAL*100));
+    document.getElementById("jDone").innerHTML=n+'<small> /'+PRACTICE_GOAL+'</small>';
+    document.getElementById("jDays").innerHTML=days+'<small> 日</small>';
+    document.getElementById("jPct").textContent=pct+"%";
+    document.getElementById("jBar").style.width=pct+"%";
+
+    var feelEl=document.getElementById("jFeel");
+    if(n===0){ feelEl.textContent="―"; feelEl.style.color="var(--muted)"; }
+    else{
+      var last=data.practice[data.practice.length-1];
+      var f=FEEL[last.feel]||FEEL.border;
+      feelEl.textContent=f.t; feelEl.style.color=f.c;
+    }
+
+    var jh=document.getElementById("jHist"); jh.innerHTML="";
+    if(n===0){
+      jh.innerHTML='<li class="empty">10月に入ったら本番形式を始めて、ここに記録します。</li>';
+    } else {
+      data.practice.slice().reverse().forEach(function(r){
+        var f=FEEL[r.feel]||FEEL.border;
+        var aScore=(r.amScore!=null)?("A"+r.amScore+"% / "):"";
+        var li=document.createElement("li");
+        li.innerHTML='<span class="tag" style="background:'+f.c+'">'+f.t+'</span>'+
+          '<span class="yr">'+aScore+(r.memo?r.memo:r.date)+'</span>'+
+          '<button class="del" data-jid="'+r.id+'" aria-label="削除">×</button>';
+        jh.appendChild(li);
+      });
+      Array.prototype.forEach.call(jh.querySelectorAll(".del"), function(b){
+        b.addEventListener("click", function(){
+          var id=this.getAttribute("data-jid");
+          data.practice=data.practice.filter(function(x){return String(x.id)!==String(id);});
+          save(); render();
+        });
+      });
+    }
+  }
+
+  function initInputs(){
+    var todayEl=document.getElementById("today");
+    if(todayEl) todayEl.textContent=todayKey();
+    var ps=document.getElementById("pmSubj");
+    SUBJECTS.forEach(function(s){
+      var o=document.createElement("option"); o.value=s.key; o.textContent=s.full; ps.appendChild(o);
+    });
+    var py=document.getElementById("pmYear");
+    YEARS.forEach(function(y){
+      var o=document.createElement("option"); o.value=y; o.textContent=y; py.appendChild(o);
+    });
+    var ay=document.getElementById("amYear");
+    AM_YEARS.forEach(function(y){
+      var o=document.createElement("option"); o.value=y; o.textContent=y; ay.appendChild(o);
+    });
+
+    var range=document.getElementById("amRange"), out=document.getElementById("amOut"), hint=document.getElementById("amHint");
+    function upd(){
+      var v=Number(range.value);
+      out.textContent=(v>=0?"+":"")+v;
+      if(v<0){ hint.textContent="訂正（マイナス入力）"; hint.className="hint"; }
+      else if(v>=AM_GOAL_DAY){ hint.textContent="目標 "+AM_GOAL_DAY+"問 達成"; hint.className="hint ok"; }
+      else { hint.textContent="目標 "+AM_GOAL_DAY+"問（あと"+(AM_GOAL_DAY-v)+"問）"; hint.className="hint"; }
+    }
+    range.addEventListener("input", upd); upd();
+
+    document.getElementById("addAm").addEventListener("click", function(){
+      var v=Number(range.value)||0;
+      if(v===0) return;
+      data.am.push({
+        id:Date.now()+"-"+Math.random().toString(36).slice(2,6),
+        date:todayKey(),
+        year:document.getElementById("amYear").value,
+        count:v
+      });
+      save(); render();
+    });
+    document.getElementById("addPm").addEventListener("click", function(){
+      data.pm.push({
+        id:Date.now()+"-"+Math.random().toString(36).slice(2,6),
+        date:todayKey(),
+        subj:document.getElementById("pmSubj").value,
+        year:document.getElementById("pmYear").value
+      });
+      save(); render();
+    });
+    var jAmS=document.getElementById("jAmScore"), jAmO=document.getElementById("jAmOut");
+    if(jAmS){ jAmS.addEventListener("input", function(){ jAmO.textContent=jAmS.value; }); }
+    document.getElementById("addJ").addEventListener("click", function(){
+      var memo=document.getElementById("jMemo").value.trim();
+      data.practice.push({
+        id:Date.now()+"-"+Math.random().toString(36).slice(2,6),
+        date:todayKey(),
+        feel:document.getElementById("jFeelSel").value,
+        amScore:Number(document.getElementById("jAmScore").value),
+        memo:memo
+      });
+      document.getElementById("jMemo").value="";
+      save(); render();
+    });
+    document.getElementById("resetBtn").addEventListener("click", function(){
+      if(!confirm("すべての記録を削除します。よろしいですか？")) return;
+      data={am:[],pm:[],practice:[]}; save(); range.value=28; upd(); render();
+    });
+
+    var tabR=document.getElementById("tabRenshu"), tabJ=document.getElementById("tabJissen");
+    var btnR=document.getElementById("tabBtnR"), btnJ=document.getElementById("tabBtnJ");
+    function showTab(which){
+      var renshu = which==="R";
+      tabR.style.display=renshu?"block":"none";
+      tabJ.style.display=renshu?"none":"block";
+      btnR.classList.toggle("active", renshu);
+      btnJ.classList.toggle("active", !renshu);
+    }
+    btnR.addEventListener("click", function(){ showTab("R"); });
+    btnJ.addEventListener("click", function(){ showTab("J"); });
+    showTab(new Date()>RENSHU_END ? "J" : "R");
+  }
+
+  initInputs();
+  render();
+  syncPull();
+})();
+</script>
+</body>
+</html>
