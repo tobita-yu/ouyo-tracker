@@ -162,8 +162,8 @@
       <div class="goal-head">🎯 やり切れば合格圏 <span class="goal-sub">全部こなした時のゴール</span></div>
       <div class="goal-grid">
         <div class="g"><div class="gk">科目A 復習</div><div class="gv">224問</div><div class="gs">コア125＋追加99</div></div>
-        <div class="g"><div class="gk">科目B 残り</div><div class="gv">13回</div><div class="gs">DB8・SA3・SM2</div></div>
-        <div class="g"><div class="gk">実践セット</div><div class="gv">10本</div><div class="gs">科目A5＋科目B5</div></div>
+        <div class="g"><div class="gk">科目B 残り</div><div class="gv">34回</div><div class="gs">DB/情シス/SM/監査/Sec</div></div>
+        <div class="g"><div class="gk">実践セット</div><div class="gv">8本</div><div class="gs">科目A5＋科目B3</div></div>
       </div>
     </div>
   </div>
@@ -172,11 +172,11 @@
   <div class="card">
     <h2>今日のノルマ</h2>
     <div class="norm">
-      <div class="n"><div class="k">平日・科目A</div><div class="v">復習 9問</div></div>
-      <div class="n"><div class="k">平日・科目B</div><div class="v">1問</div></div>
-      <div class="n"><div class="k">週末どちらか</div><div class="v">科目B 1〜2問（当面DB）</div></div>
+      <div class="n"><div class="k">平日</div><div class="v">科目B 2問</div></div>
+      <div class="n"><div class="k">週末</div><div class="v">実践1本＋復習（科目A優先）</div></div>
+      <div class="n"><div class="k">科目A追加99</div><div class="v">週末＋平日の余白で消化</div></div>
     </div>
-    <p class="hint" style="margin:10px 0 0">実践は週1本（直前2週は週2）。土日祝は原則オフ＝週末は前借り分だけ。</p>
+    <p class="hint" style="margin:10px 0 0">実践と科目A追加復習は週末中心。平日は科目B 2問で前倒し。科目Aは11/8まで、科目Bは12/6まで。</p>
   </div>
 
   <!-- 全体の進捗 -->
@@ -192,9 +192,9 @@
       <div class="bar"><i id="pPmB" style="width:0%;background:var(--grad2)"></i><span class="mark" id="mkPmB"></span></div>
       <div class="sub" id="sPmB"></div>
       <div class="breakdown">
-        <div class="hint" style="margin:0 0 8px">内訳（DB手厚め）</div>
+        <div class="hint" style="margin:0 0 8px">内訳（本命4＋必須セキュリティ）</div>
         <div id="subjBars"></div>
-        <p class="hint" style="margin:6px 0 0">セキュリティ・PM・情シスは消化済み。本番は必須＋選択4問＝DB/IS/PMを厚く。</p>
+        <p class="hint" style="margin:6px 0 0">本命＝DB・情シス・SM・監査＋必須セキュリティ。SA／プロマネは保険（時間が余れば）。目標は当面の残り数。前倒しできたら各10（5年分通し）に上げる。</p>
       </div>
     </div>
     <div class="bar-row" style="margin-bottom:0">
@@ -218,7 +218,7 @@
       <span><i style="background:#7c8cff"></i>復習コア</span>
       <span><i style="background:#a779ff"></i>復習追加</span>
       <span><i style="background:#42d6a0"></i>科目B演習</span>
-      <span><i style="background:#ffb13d"></i>DB前借り(週末)</span>
+      <span><i style="background:#ffb13d"></i>科目B前借り(平日2問)</span>
       <span><i style="background:#3dd6e6"></i>実践</span>
     </div>
     <p class="hint" style="margin:10px 0 0">📝10/6申込開始（即予約）／🅰️11/8 科目A／🅱️12/6 科目B。縦線＝今日。</p>
@@ -254,9 +254,11 @@
     <div class="field">
       <label>科目</label>
       <select id="pmbSubj">
-        <option value="DB">データベース（残8）</option>
-        <option value="SA">システムアーキテクチャ（残3）</option>
-        <option value="SM">サービスマネジメント（残2）</option>
+        <option value="DB">データベース（残9）</option>
+        <option value="IS">情報システム開発（残4）</option>
+        <option value="SM">サービスマネジメント（残7）</option>
+        <option value="AU">システム監査（残9）</option>
+        <option value="SEC">情報セキュリティ（残5）</option>
       </select>
     </div>
     <button class="btn add" onclick="addPmB()">この1問を記録に追加</button>
@@ -295,10 +297,10 @@
   // ===== 定数 =====
   var EXAM_A = "2026-11-08";   // 科目A 試験（最終土日）
   var EXAM_B = "2026-12-06";   // 科目B 試験（最終日・日曜）
-  var TARGET = { reviewCore:125, reviewExtra:99, DB:8, SA:3, SM:2, pracA:5, pracB:5 };
+  var TARGET = { reviewCore:125, reviewExtra:99, DB:9, IS:4, SM:7, AU:9, SEC:5, pracA:5, pracB:3 };
   var TOTAL_REVIEW = TARGET.reviewCore + TARGET.reviewExtra; // 224
-  var TOTAL_PMB    = TARGET.DB + TARGET.SA + TARGET.SM;      // 13
-  var TOTAL_PRAC   = TARGET.pracA + TARGET.pracB;            // 10
+  var TOTAL_PMB    = TARGET.DB + TARGET.IS + TARGET.SM + TARGET.AU + TARGET.SEC; // 34
+  var TOTAL_PRAC   = TARGET.pracA + TARGET.pracB;            // 8
 
   // ===== 保存 / 同期（旧サイトと分離）=====
   var KEY = "ap_plan_v1";
@@ -411,9 +413,9 @@
     {n:"科目A 復習コア(125)", s:1, e:5,  c:"#7c8cff", ph:"A"},
     {n:"科目A 復習追加(99)",  s:5, e:8,  c:"#a779ff", ph:"A"},
     {n:"科目A 実践 5本",      s:6, e:8,  c:"#3dd6e6", ph:"A"},
-    {n:"科目B DB前借り(週末)", s:3, e:8,  c:"#ffb13d", ph:"A"},
-    {n:"科目B 演習 DB/SA/SM", s:9, e:11, c:"#42d6a0", ph:"B"},
-    {n:"科目B 実践 5本",      s:10,e:12, c:"#3dd6e6", ph:"B"}
+    {n:"科目B 前借り(平日2問)", s:3, e:8,  c:"#ffb13d", ph:"A"},
+    {n:"科目B 演習 DB/情シス/SM/監査", s:9, e:11, c:"#42d6a0", ph:"B"},
+    {n:"科目B 実践 3本",      s:10,e:12, c:"#3dd6e6", ph:"B"}
   ];
   var FLAGS = {4:"📝", 8:"🅰️", 12:"🅱️"}; // 申込 / 科目A / 科目B
 
@@ -466,9 +468,11 @@
 
   // ===== 科目B 内訳バー =====
   function buildSubjBars(){
-    var defs=[{k:"DB",name:"データベース",goal:8,c:"#42d6a0"},
-              {k:"SA",name:"システムアーキ",goal:3,c:"#7c8cff"},
-              {k:"SM",name:"サービスマネジ",goal:2,c:"#3dd6e6"}];
+    var defs=[{k:"DB",name:"データベース",goal:9,c:"#42d6a0"},
+              {k:"IS",name:"情報システム開発",goal:4,c:"#7c8cff"},
+              {k:"SM",name:"サービスマネジ",goal:7,c:"#3dd6e6"},
+              {k:"AU",name:"システム監査",goal:9,c:"#ffb13d"},
+              {k:"SEC",name:"情報セキュリティ",goal:5,c:"#a779ff"}];
     var s="";
     for(var i=0;i<defs.length;i++){
       var d=defs[i], done=pmbCount(d.k), pct=Math.min(100, done/d.goal*100);
@@ -490,7 +494,7 @@
         tag:(r.type==="core"?"復習コア":"復習追加"), color:(r.type==="core"?"#7c8cff":"#a779ff"),
         label:"+"+r.count+"問"}); }
     for(var i=0;i<data.pmb.length;i++){ var p=data.pmb[i];
-      var nm={DB:"DB",SA:"SA",SM:"SM"}[p.subj]||p.subj;
+      var nm={DB:"DB",IS:"情シス",SM:"SM",AU:"監査",SEC:"Sec"}[p.subj]||p.subj;
       items.push({date:p.date, id:p.id, kind:"pmb", tag:"科目B "+nm, color:"#42d6a0", label:"1問"}); }
     for(var i=0;i<data.practice.length;i++){ var q=data.practice[i];
       items.push({date:q.date, id:q.id, kind:"practice", tag:"実践 科目"+q.subj, color:"#ffb13d",
